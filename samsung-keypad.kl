@@ -1,0 +1,11 @@
+# samsung-keypad key layout for Samsung Jet
+
+key 11    VOLUME_UP 
+key 10    VOLUME_DOWN 
+key 9     CALL              WAKE_DROPPED 
+key 1     MENU              WAKE 
+key 249   ENDCALL           WAKE_DROPPED 
+key 2     CAMERA 
+key 3     FOCUS 
+key 19    HOME              WAKE 
+key 17    BACK              WAKE_DROPPED 
