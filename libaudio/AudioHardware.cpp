@@ -74,45 +74,42 @@ enum {
 // ----------------------------------------------------------------------------
 
 const AudioHardware::AudioPinConfig AudioHardware::initialPinConfig[] = {
-    { "Line Output 1 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Line Output 3 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Line Input 1 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Line Input 2 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Line Input 3 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Line Input 4 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
+//    { "Line Output 1 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
+//    { "Line Output 3 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
+//    { "Line Input 1 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
+//    { "Line Input 2 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
+//    { "Line Input 3 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
+//    { "Line Input 4 Differential", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig inputMicMainPinConfigs[] = {
     { "Main Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "RIN MUX", AudioHardware::TYPE_MUX, "RIN2", 0 },
-    { "LIN MUX", AudioHardware::TYPE_MUX, "LIN1", 0 },
-    { "Mic Amp Capture Volume", AudioHardware::TYPE_INT, NULL, 87 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "Main Mic", 0 },
+    { "Microphone Pre-Amp", AudioHardware::TYPE_INT, NULL, 67 },
+    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 90 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig inputMicSubPinConfigs[] = {
     { "Sub Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "RIN MUX", AudioHardware::TYPE_MUX, "RIN2", 0 },
-    { "LIN MUX", AudioHardware::TYPE_MUX, "LIN1", 0 },
-    { "Mic Amp Capture Volume", AudioHardware::TYPE_INT, NULL, 60 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "Ear Mic", 0 },
+    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 67 },
+    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 90 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig inputHeadsetPinConfigs[] = {
-    { "Jack Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "RIN MUX", AudioHardware::TYPE_MUX, "RIN2", 0 },
-    { "LIN MUX", AudioHardware::TYPE_MUX, "LIN3", 0 },
-    { "Mic Amp Capture Volume", AudioHardware::TYPE_INT, NULL, 60 },
+    { "FM In Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "FM In", 0 },
+    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig inputPhonePinConfigs[] = {
     { "Main Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "GSM Receive Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "RIN MUX", AudioHardware::TYPE_MUX, "RIN4", 0 },
-    { "LIN MUX", AudioHardware::TYPE_MUX, "LIN1", 0 },
-    { "Mic Amp Capture Volume", AudioHardware::TYPE_INT, NULL, 87 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, NULL, 0 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
@@ -125,34 +122,32 @@ static const AudioHardware::AudioRouteConfig inputRouteConfigs[] = {
 };
 
 static const AudioHardware::AudioPinConfig outputRcvPinConfigs[] = {
-    { "Line Output1 Playback Volume", AudioHardware::TYPE_INT, NULL, 84 },
-    { "LOUT1 Mixer DACL", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT1 Mixer DACR", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "SDACA Attenuation", AudioHardware::TYPE_INT, NULL, 3 },
+    { "LOUTP", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Earpiece Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig outputSpkPinConfigs[] = {
-    { "MAX9877 Amp Speaker Playback Volume", AudioHardware::TYPE_INT, NULL, 95 },
+    { "Master Playback Volume", AudioHardware::TYPE_INT, NULL, 64 },
     { "Speaker Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "LOUT2 Mixer DACHL", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT2 Mixer DACHR", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LIN Mixer LIN3", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "RIN Mixer RIN4", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig outputHpPinConfigs[] = {
-    { "MAX9877 Amp HP Playback Volume", AudioHardware::TYPE_INT, NULL, 100 },
+    { "Master Playback Volume", AudioHardware::TYPE_INT, NULL, 100 },
     { "Headphones Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "LOUT2 Mixer DACHL", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT2 Mixer DACHR", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LIN Mixer LIN3", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "RIN Mixer RIN4", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig outputSpkHpPinConfigs[] = {
-    { "MAX9877 Amp Speaker Playback Volume", AudioHardware::TYPE_INT, NULL, 95 },
-    { "MAX9877 Amp HP Playback Volume", AudioHardware::TYPE_INT, NULL, 100 },
-    { "LOUT2 Mixer DACHL", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT2 Mixer DACHR", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "Master Playback Volume", AudioHardware::TYPE_INT, NULL, 64 },
+    { "LIN Mixer LIN3", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "RIN Mixer RIN4", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Speaker Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Headphones Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
@@ -195,22 +190,21 @@ static const AudioHardware::AudioRouteConfig voiceInRouteConfigs[] = {
 };
 
 static const AudioHardware::AudioPinConfig voiceOutRcvPinConfigs[] = {
-    { "LOUT1 Mixer LINL4", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT1 Mixer RINR4", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LOUTP", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Earpiece Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig voiceOutSpkPinConfigs[] = {
-    { "LOUT2 Mixer LINH4", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT2 Mixer RINH4", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LIN Mixer LVOICEINP", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "RIN Mixer RVOICEINN", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Speaker Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig voiceOutHpPinConfigs[] = {
-    { "LOUT2 Mixer LINH4", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT2 Mixer RINH4", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LIN Mixer LVOICEINP", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "RIN Mixer RVOICEINN", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Headphones Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
@@ -681,18 +675,18 @@ void AudioHardware::setOutputVolume(uint32_t device, uint32_t volume)
 
     switch (device) {
     case AudioSystem::DEVICE_OUT_EARPIECE:
-        name = "Line Output1 Playback Volume";
+        name = "SDACA Attenuation";
         break;
     case (AudioSystem::DEVICE_OUT_SPEAKER|AudioSystem::DEVICE_OUT_WIRED_HEADPHONE):
     case (AudioSystem::DEVICE_OUT_SPEAKER|AudioSystem::DEVICE_OUT_WIRED_HEADSET):
-        name2 = "MAX9877 Amp HP Playback Volume";
+        name2 = "Master Playback Volume";
         /* Intended fall through */
     case AudioSystem::DEVICE_OUT_SPEAKER:
-        name = "MAX9877 Amp Speaker Playback Volume";
+        name = "Master Playback Volume";
         break;
     case AudioSystem::DEVICE_OUT_WIRED_HEADPHONE:
     case AudioSystem::DEVICE_OUT_WIRED_HEADSET:
-        name = "MAX9877 Amp HP Playback Volume";
+        name = "Master Playback Volume";
         break;
     case AudioSystem::DEVICE_OUT_BLUETOOTH_SCO:
     case AudioSystem::DEVICE_OUT_BLUETOOTH_SCO_HEADSET:
@@ -941,7 +935,7 @@ uint32_t AudioHardware::getOutputRouteFromDevice(uint32_t device)
         return OUTPUT_HP;
     case (AudioSystem::DEVICE_OUT_SPEAKER|AudioSystem::DEVICE_OUT_WIRED_HEADPHONE):
     case (AudioSystem::DEVICE_OUT_SPEAKER|AudioSystem::DEVICE_OUT_WIRED_HEADSET):
-        return OUTPUT_SPK_HP;
+        return OUTPUT_HP;
     case AudioSystem::DEVICE_OUT_BLUETOOTH_SCO:
     case AudioSystem::DEVICE_OUT_BLUETOOTH_SCO_HEADSET:
     case AudioSystem::DEVICE_OUT_BLUETOOTH_SCO_CARKIT:
@@ -1165,7 +1159,7 @@ ssize_t AudioHardware::AudioStreamOutALSA::write(const void* buffer, size_t byte
         if (ret == 0) {
             return bytes;
         }
-        LOGW("write error: %d", errno);
+        LOGW("write error: %d %s", errno, pcm_error(mPcm));
         status = -errno;
     }
 Error:
