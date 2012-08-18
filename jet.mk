@@ -40,6 +40,8 @@
 # application settings that are stored in resourced.
 DEVICE_PACKAGE_OVERLAYS := device/samsung/jet/overlay
 
+DISABLE_DEXPREOPT := false
+
 # These are the hardware-specific configuration files
 PRODUCT_COPY_FILES := \
     device/samsung/jet/egl.cfg:system/lib/egl/egl.cfg \
@@ -56,12 +58,14 @@ PRODUCT_COPY_FILES += \
 
 # Prebuilt kl keymaps
 PRODUCT_COPY_FILES += \
+    device/samsung/jet/samsung-keypad.kl:system/usr/keylayout/s3c6410-keypad.kl \
     device/samsung/jet/samsung-keypad.kl:system/usr/keylayout/samsung-keypad.kl \
     device/samsung/jet/sec_jack.kl:system/usr/keylayout/sec_jack.kl \
     device/samsung/jet/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl
 
 # Generated kcm keymaps
 PRODUCT_PACKAGES := \
+    s3c6410-keypad.kcm \
     samsung-keypad.kcm \
     gpio-keys.kcm
 
@@ -73,17 +77,21 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     lights.jet \
     gps.jet \
-    libs3cjpeg \
-    libcamera \
+    sensors.jet \
     bdaddr_read \
+    crashguard \
     show_logo \
-    copybit.s3c6410 \
-    gralloc.s3c6410 \
+    copybit.jet \
+    gralloc.jet \
     libsecgps.so \
     libsec-ril.so \
     libsecril-client.so \
-    efsd \
+    dexpreopt \
     libGLES_fimg
+
+# Device specific apps
+PRODUCT_PACKAGES += \
+    FM
 
 # These are the hardware-specific features
 PRODUCT_COPY_FILES += \
@@ -138,8 +146,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
        wifi.supplicant_scan_interval=20 \
        ro.telephony.ril_class=jet \
        mobiledata.interfaces=pdp0,wlan0,gprs,ppp0 \
+       dalvik.vm.dexopt-flags=m=y \
+       dalvik.vm.execution-mode=int:jit \
        dalvik.vm.heapsize=32m \
        dalvik.vm.dexopt-data-only=1 \
+
+# we have enough storage space to hold precise GC data
+PRODUCT_TAGS += dalvik.gc.type-precise
 
 # enable Google-specific location features,
 # like NetworkLocationProvider and LocationCollector

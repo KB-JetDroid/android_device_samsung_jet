@@ -12,27 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
 
-ifeq ($(TARGET_DEVICE),jet)
-
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := s3c6410-keypad.kcm
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_KEY_CHAR_MAP)
+LOCAL_PATH:= $(call my-dir)
+# HAL module implemenation, not prelinked and stored in
+# hw/<COPYPIX_HARDWARE_MODULE_ID>.<ro.board.platform>.so
 
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := samsung-keypad.kcm
+LOCAL_PRELINK_MODULE := false
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
+LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_SRC_FILES := copybit.cpp
+LOCAL_MODULE := copybit.jet
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_KEY_CHAR_MAP)
-
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := gpio-keys.kcm
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_KEY_CHAR_MAP)
-
-ifneq ($(TARGET_SIMULATOR),true)
-include $(call all-makefiles-under,$(LOCAL_PATH))
-endif
-
-endif
+LOCAL_C_INCLUDES += ../libgralloc ../modules/g2d
+LOCAL_ARM_MODE := arm
+LOCAL_CFLAGS += -DCOPYBIT_S3C6410=1 -mcpu=arm1176jzf-s -mfpu=vfp -O2
+include $(BUILD_SHARED_LIBRARY)

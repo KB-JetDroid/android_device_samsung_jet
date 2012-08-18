@@ -21,6 +21,7 @@
 
 # Audio
 BOARD_USES_GENERIC_AUDIO := false
+
 # Use the non-open-source parts, if they're present
 -include vendor/samsung/jet/BoardConfigVendor.mk
 
@@ -31,6 +32,8 @@ TARGET_CPU_ABI := armeabi-v6l
 TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH_VARIANT := armv6-vfp
 TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
+TARGET_GLOBAL_CFLAGS += -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=softfp -O3
+TARGET_GLOBAL_CPPFLAGS += -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=softfp -O3
 
 # Package contents
 TARGET_NO_BOOTLOADER := true
@@ -68,36 +71,42 @@ BOARD_HAVE_BLUETOOTH_BCM := true
 #BOARD_CAMERA_DEVICE := /dev/video0
 
 # Partitions
-BOARD_BOOTIMAGE_PARTITION_SIZE := 0x00500000
-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 0x08600000
+BOARD_BOOTIMAGE_PARTITION_SIZE := 0x00600000
+BOARD_SYSTEMIMAGE_PARTITION_SIZE := 0x09000000
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 0x0e000000
 BOARD_FLASH_BLOCK_SIZE := 131072
 
 # Misc
+WITH_DEXPREOPT := true
 BOARD_HAS_NO_SELECT_BUTTON := true
 BOARD_HAS_NO_MISC_PARTITION := true
 WITH_JIT := true
 ENABLE_JSC_JIT := true
 JS_ENGINE := v8
 BUILD_WITH_FULL_STAGEFRIGHT := true
-TARGET_LIBAGL_USE_GRALLOC_COPYBITS := true
 TARGET_PROVIDES_LIBAUDIO := true
 TARGET_PROVIDES_LIBRIL := true
+
+# FM Radio
+BOARD_HAVE_FM_RADIO := true
+BOARD_GLOBAL_CFLAGS += -DHAVE_FM_RADIO
+BOARD_FM_DEVICE := si4709
 
 # Connectivity - Wi-Fi
 WPA_SUPPLICANT_VERSION := VER_0_6_X
 BOARD_WPA_SUPPLICANT_DRIVER := WEXT
 BOARD_WLAN_DEVICE := bcm4329
-WIFI_DRIVER_MODULE_PATH     := "/lib/modules/bcmdhd.ko"
-WIFI_DRIVER_FW_STA_PATH     := "/system/etc/fw_bcm4325.bin"
-WIFI_DRIVER_MODULE_NAME     :=  "bcmdhd"
-WIFI_DRIVER_MODULE_ARG      :=  "firmware_path=/system/etc/fw_bcm4325.bin nvram_path=/system/etc/nvram.txt"
+WIFI_DRIVER_MODULE_PATH := "/lib/modules/bcmdhd.ko"
+WIFI_DRIVER_FW_STA_PATH := "/system/etc/fw_bcm4325.bin"
+WIFI_DRIVER_MODULE_NAME := "bcmdhd"
+WIFI_DRIVER_MODULE_ARG := "firmware_path=/system/etc/fw_bcm4325.bin nvram_path=/system/etc/nvram.txt dhd_watchdog_ms=10 dhd_poll=1"
 
 # GPS
 BOARD_GPS_LIBRARIES := libsecgps libsecril-client
 BOARD_USES_GPSSHIM := true
 
 # 3D
+TARGET_LIBAGL_USE_GRALLOC_COPYBITS := true
 BOARD_EGL_CFG := device/samsung/jet/egl.cfg
 
 # Prelinker

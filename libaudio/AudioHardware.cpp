@@ -40,6 +40,11 @@ extern "C" {
 #include "alsa_audio.h"
 }
 
+#ifdef HAVE_FM_RADIO
+#define Si4709_IOC_MAGIC 0xFA
+#define Si4709_IOC_VOLUME_SET _IOW(Si4709_IOC_MAGIC, 15, __u8)
+#endif
+
 
 namespace android {
 
@@ -91,33 +96,46 @@ static const AudioHardware::AudioPinConfig inputMicMainPinConfigs[] = {
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
+#if 0
 static const AudioHardware::AudioPinConfig inputMicSubPinConfigs[] = {
     { "Sub Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Input Mixer", AudioHardware::TYPE_MUX, "Ear Mic", 0 },
-    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 67 },
+    { "Microphone Pre-Amp", AudioHardware::TYPE_INT, NULL, 67 },
     { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 90 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
+#endif
 
 static const AudioHardware::AudioPinConfig inputHeadsetPinConfigs[] = {
-    { "FM In Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Input Mixer", AudioHardware::TYPE_MUX, "FM In", 0 },
-    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 1 },
+    { "Ear Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "Ear Mic", 0 },
+    { "Microphone Pre-Amp", AudioHardware::TYPE_INT, NULL, 67 },
+    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 90 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig inputPhonePinConfigs[] = {
     { "Main Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "GSM Receive Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "Input Mixer", AudioHardware::TYPE_MUX, NULL, 0 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "Main Mic", 0 },
+    AUDIO_PIN_CONFIG_TERMINATOR,
+};
+
+static const AudioHardware::AudioPinConfig inputFmPinConfigs[] = {
+    { "FM Receive Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "None", 0 },
+    { "Line Input Gain", AudioHardware::TYPE_INT, NULL, 100 },
+    { "LOUT Mixer Left LIN", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "ROUT Mixer Right LIN", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioRouteConfig inputRouteConfigs[] = {
     { AudioHardware::INPUT_MIC_MAIN, inputMicMainPinConfigs },
-    { AudioHardware::INPUT_MIC_SUB, inputMicSubPinConfigs },
+//    { AudioHardware::INPUT_MIC_SUB, inputMicSubPinConfigs },
     { AudioHardware::INPUT_HEADSET, inputHeadsetPinConfigs },
     { AudioHardware::INPUT_PHONE, inputPhonePinConfigs },
+    { AudioHardware::INPUT_FM, inputFmPinConfigs },
     AUDIO_ROUTE_CONFIG_TERMINATOR
 };
 
@@ -131,6 +149,8 @@ static const AudioHardware::AudioPinConfig outputRcvPinConfigs[] = {
 static const AudioHardware::AudioPinConfig outputSpkPinConfigs[] = {
     { "Master Playback Volume", AudioHardware::TYPE_INT, NULL, 64 },
     { "Speaker Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LOUT Mixer DACL", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "ROUT Mixer DACR", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "LIN Mixer LIN3", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "RIN Mixer RIN4", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
@@ -139,6 +159,8 @@ static const AudioHardware::AudioPinConfig outputSpkPinConfigs[] = {
 static const AudioHardware::AudioPinConfig outputHpPinConfigs[] = {
     { "Master Playback Volume", AudioHardware::TYPE_INT, NULL, 100 },
     { "Headphones Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LOUT Mixer DACL", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "ROUT Mixer DACR", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "LIN Mixer LIN3", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "RIN Mixer RIN4", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
@@ -148,6 +170,8 @@ static const AudioHardware::AudioPinConfig outputSpkHpPinConfigs[] = {
     { "Master Playback Volume", AudioHardware::TYPE_INT, NULL, 64 },
     { "LIN Mixer LIN3", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "RIN Mixer RIN4", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "LOUT Mixer DACL", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "ROUT Mixer DACR", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Speaker Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     { "Headphones Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
     AUDIO_PIN_CONFIG_TERMINATOR,
@@ -157,14 +181,16 @@ static const AudioHardware::AudioRouteConfig outputRouteConfigs[] = {
     { AudioHardware::OUTPUT_RCV, outputRcvPinConfigs },
     { AudioHardware::OUTPUT_SPK, outputSpkPinConfigs },
     { AudioHardware::OUTPUT_HP, outputHpPinConfigs },
+    { AudioHardware::OUTPUT_FM_HP, outputHpPinConfigs },
     { AudioHardware::OUTPUT_SPK_HP, outputSpkHpPinConfigs },
     AUDIO_ROUTE_CONFIG_TERMINATOR,
 };
 
 static const AudioHardware::AudioPinConfig voiceInMicMainPinConfigs[] = {
     { "Main Mic Switch", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "LOUT3 Mixer LINS1", AudioHardware::TYPE_BOOL, NULL, 1 },
-    { "ROUT3 Mixer RINS1", AudioHardware::TYPE_BOOL, NULL, 1 },
+    { "Input Mixer", AudioHardware::TYPE_MUX, "Main Mic", 0 },
+    { "Microphone Pre-Amp", AudioHardware::TYPE_INT, NULL, 67 },
+    { "Microphone PGA", AudioHardware::TYPE_INT, NULL, 90 },
     AUDIO_PIN_CONFIG_TERMINATOR,
 };
 
@@ -228,6 +254,8 @@ void AudioHardware::setAudioRoute(enum RouteType type, uint32_t newRoute)
     const AudioRouteConfig *route;
     const AudioPinConfig *pin;
     struct mixer_ctl *ctl;
+
+    LOGV("setAudioRoute, mRoute[type] = %d RouteType = %d newRoute = %d", mRoute[type], type, newRoute);
 
     if (mRoute[type] == newRoute)
         return;
@@ -294,6 +322,11 @@ AudioHardware::AudioHardware() :
     mVoiceVol(1.0f),
     mInputSource(AUDIO_SOURCE_DEFAULT),
     mBluetoothNrec(true),
+#ifdef HAVE_FM_RADIO
+    mFmFd(-1),
+    mFmVolume(1),
+    mFmResumeAfterCall(false),
+#endif
     mDriverOp(DRV_NONE)
 {
     struct mixer_ctl *ctl;
@@ -363,6 +396,8 @@ AudioStreamOut* AudioHardware::openOutputStream(
     sp <AudioStreamOutALSA> out;
     status_t rc;
 
+    LOGV("AudioHardware::openOutputStream");
+
     { // scope for the lock
         Mutex::Autolock lock(mLock);
 
@@ -397,6 +432,8 @@ AudioStreamOut* AudioHardware::openOutputStream(
 void AudioHardware::closeOutputStream(AudioStreamOut* out) {
     sp <AudioStreamOutALSA> spOut;
     {
+    	LOGV("AudioHardware::closeOutputStream");
+
         Mutex::Autolock lock(mLock);
         if (mOutput == 0 || mOutput.get() != out) {
             LOGW("Attempt to close invalid output stream");
@@ -413,6 +450,7 @@ AudioStreamIn* AudioHardware::openInputStream(
     uint32_t *sampleRate, status_t *status,
     AudioSystem::audio_in_acoustics acoustic_flags)
 {
+	LOGV("AudioHardware::openInputStream");
     // check for valid input source
     if (!AudioSystem::isInputDevice((AudioSystem::audio_devices)devices)) {
         if (status) {
@@ -451,6 +489,8 @@ void AudioHardware::closeInputStream(AudioStreamIn* in) {
 
     sp<AudioStreamInALSA> spIn;
     {
+    	LOGV("AudioHardware::closeInputStream");
+
         Mutex::Autolock lock(mLock);
 
         ssize_t index = mInputs.indexOf((AudioStreamInALSA *)in);
@@ -471,6 +511,10 @@ status_t AudioHardware::setMode(int mode)
     sp<AudioStreamOutALSA> spOut;
     sp<AudioStreamInALSA> spIn;
     status_t status;
+
+    // bump thread priority to speed up mutex acquisition
+    int  priority = getpriority(PRIO_PROCESS, 0);
+    setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_URGENT_AUDIO);
 
     // Mutex acquisition order is always out -> in -> hw
     AutoMutex lock(mLock);
@@ -494,6 +538,8 @@ status_t AudioHardware::setMode(int mode)
         }
     }
     // spOut is not 0 here only if the output is active
+
+    setpriority(PRIO_PROCESS, 0, priority);
 
     spIn = getActiveInput_l();
     while (spIn != 0) {
@@ -543,12 +589,13 @@ status_t AudioHardware::setMode(int mode)
             }
             mInCallAudioMode = true;
         }
-        if (mMode == AudioSystem::MODE_NORMAL && mInCallAudioMode) {
+        if (mMode != AudioSystem::MODE_IN_CALL && mInCallAudioMode) {
             struct mixer_ctl *ctl;
             if (mMixer != NULL) {
                 setAudioRoute(ROUTE_VOICE_OUT, 0);
                 setAudioRoute(ROUTE_VOICE_IN, 0);
                 setAudioRoute(ROUTE_OUTPUT, OUTPUT_RCV);
+                setAudioRoute(ROUTE_INPUT, 0);
                 setMasterVolume_l(mMasterVol);
                 ctl = mixer_get_control(mMixer, "GSM Send Switch", 0);
                 if (ctl)
@@ -581,6 +628,14 @@ status_t AudioHardware::setMode(int mode)
     if (spOut != 0) {
         spOut->unlock();
     }
+
+#ifdef HAVE_FM_RADIO
+    if (mFmResumeAfterCall) {
+        mFmResumeAfterCall = false;
+
+        enableFMRadio();
+    }
+#endif
 
     return status;
 }
@@ -624,6 +679,8 @@ status_t AudioHardware::setParameters(const String8& keyValuePairs)
     const char BT_NREC_KEY[] = "bt_headset_nrec";
     const char BT_NREC_VALUE_ON[] = "on";
 
+    LOGV("AudioHardware::setParameters");
+
     key = String8(BT_NREC_KEY);
     if (param.get(key, value) == NO_ERROR) {
         if (value == BT_NREC_VALUE_ON) {
@@ -635,6 +692,22 @@ status_t AudioHardware::setParameters(const String8& keyValuePairs)
         }
         param.remove(String8(BT_NREC_KEY));
     }
+
+#ifdef HAVE_FM_RADIO
+    // fm radio on
+    key = String8(AudioParameter::keyFmOn);
+    if (param.get(key, value) == NO_ERROR) {
+        enableFMRadio();
+    }
+    param.remove(key);
+
+    // fm radio off
+    key = String8(AudioParameter::keyFmOff);
+    if (param.get(key, value) == NO_ERROR) {
+        disableFMRadio();
+    }
+    param.remove(key);
+#endif
 
     return NO_ERROR;
 }
@@ -672,6 +745,8 @@ void AudioHardware::setOutputVolume(uint32_t device, uint32_t volume)
 {
     const char *name, *name2 = 0;
     struct mixer_ctl *ctl;
+
+    LOGV("AudioHardware::setOutputVolume");
 
     switch (device) {
     case AudioSystem::DEVICE_OUT_EARPIECE:
@@ -755,6 +830,22 @@ void AudioHardware::setMasterVolume_l(float volume)
 	}
     }
 }
+
+#ifdef HAVE_FM_RADIO
+status_t AudioHardware::setFmVolume(float v)
+{
+    mFmVolume = v;
+    if (mFmFd > 0) {
+        __u8 fmVolume = (AudioSystem::logToLinear(v) + 5) / 7;
+        LOGD("%s %f %d", __func__, v, (int) fmVolume);
+        if (ioctl(mFmFd, Si4709_IOC_VOLUME_SET, &fmVolume) < 0) {
+            LOGE("set_volume_fm error.");
+            return -EIO;
+        }
+    }
+    return NO_ERROR;
+}
+#endif
 
 static const int kDumpLockRetries = 50;
 static const int kDumpLockSleep = 20000;
@@ -841,6 +932,63 @@ status_t AudioHardware::setIncallPath_l(uint32_t device)
     return NO_ERROR;
 }
 
+#ifdef HAVE_FM_RADIO
+void AudioHardware::enableFMRadio() {
+
+    struct mixer_ctl *ctl;
+
+    LOGV("AudioHardware::enableFMRadio() Turning FM Radio ON");
+
+    if (mMode == AudioSystem::MODE_IN_CALL) {
+        LOGV("AudioHardware::enableFMRadio() Call is active. Delaying FM enable.");
+        mFmResumeAfterCall = true;
+    }
+    else {
+
+    	openPcmOut_l();
+    	openMixer_l();
+
+    	if (mMixer != NULL) {
+
+            setAudioRoute(ROUTE_INPUT, INPUT_FM);
+            setAudioRoute(ROUTE_OUTPUT, mOutput->device());
+        }
+        if (mFmFd < 0) {
+            mFmFd = open("/dev/radio0", O_RDWR);
+            // In case setFmVolume was called before FM was enabled, we save the volume and call it here.
+            setFmVolume(mFmVolume);
+        }
+    }
+}
+
+void AudioHardware::disableFMRadio() {
+    LOGV("AudioHardware::disableFMRadio() Turning FM Radio OFF");
+
+    if (mMixer != NULL) {
+        // Disable FM radio flag to allow the codec to be turned off
+        // (the flag is automatically set by the kernel driver when FM is enabled)
+        // No need to turn off the FM Radio path as the kernel driver will handle that
+        TRACE_DRIVER_IN(DRV_MIXER_GET)
+        struct mixer_ctl *ctl = mixer_get_control(mMixer, "Codec Status", 0);
+        TRACE_DRIVER_OUT
+
+        if (ctl != NULL) {
+            TRACE_DRIVER_IN(DRV_MIXER_SEL)
+            mixer_ctl_select(ctl, "FMR_FLAG_CLEAR");
+            TRACE_DRIVER_OUT
+        }
+
+        closeMixer_l();
+        closePcmOut_l();
+    }
+
+    if (mFmFd > 0) {
+        close(mFmFd);
+        mFmFd = -1;
+    }
+}
+#endif
+
 struct pcm *AudioHardware::openPcmOut_l()
 {
     LOGD("openPcmOut_l() mPcmOpenCnt: %d", mPcmOpenCnt);
@@ -925,6 +1073,8 @@ void AudioHardware::closeMixer_l()
 
 uint32_t AudioHardware::getOutputRouteFromDevice(uint32_t device)
 {
+	LOGV("AudioHardware::getOutputRouteFromDevice");
+
     switch (device) {
     case AudioSystem::DEVICE_OUT_EARPIECE:
         return OUTPUT_RCV;
@@ -947,6 +1097,8 @@ uint32_t AudioHardware::getOutputRouteFromDevice(uint32_t device)
 
 uint32_t AudioHardware::getVoiceOutRouteFromDevice(uint32_t device)
 {
+	LOGV("AudioHardware::getVoiceOutRouteFromDevice");
+
     switch (device) {
     case AudioSystem::DEVICE_OUT_EARPIECE:
         return VOICE_OUT_RCV;
@@ -966,6 +1118,8 @@ uint32_t AudioHardware::getVoiceOutRouteFromDevice(uint32_t device)
 
 uint32_t AudioHardware::getVoiceInRouteFromDevice(uint32_t device)
 {
+	LOGV("AudioHardware::getVoiceInRouteFromDevice");
+
     switch (device) {
     case AudioSystem::DEVICE_OUT_EARPIECE:
         return VOICE_IN_MIC_MAIN;
@@ -989,6 +1143,8 @@ uint32_t AudioHardware::getInputRouteFromDevice(uint32_t device)
         return 0;
     }
 
+    LOGV("AudioHardware::getInputRouteFromDevice");
+
     switch (device) {
     case AudioSystem::DEVICE_IN_BUILTIN_MIC:
         return INPUT_MIC_MAIN;
@@ -1000,6 +1156,12 @@ uint32_t AudioHardware::getInputRouteFromDevice(uint32_t device)
         return INPUT_BT;
     case AudioSystem::DEVICE_IN_VOICE_CALL:
         return INPUT_PHONE;
+#ifdef HAVE_FM_RADIO
+    case AudioSystem::DEVICE_IN_FM_RX:
+        return INPUT_FM;
+    case AudioSystem::DEVICE_IN_FM_RX_A2DP:
+        return INPUT_FM;
+#endif
     default:
         return 0;
     }
@@ -1023,6 +1185,8 @@ uint32_t AudioHardware::getInputSampleRate(uint32_t sampleRate)
 sp <AudioHardware::AudioStreamInALSA> AudioHardware::getActiveInput_l()
 {
     sp< AudioHardware::AudioStreamInALSA> spIn;
+
+    LOGV("AudioHardware::getActiveInput_l");
 
     for (size_t i = 0; i < mInputs.size(); i++) {
         // return first input found not being in standby mode
@@ -1058,6 +1222,8 @@ status_t AudioHardware::AudioStreamOutALSA::set(
 
     mHardware = hw;
     mDevices = devices;
+
+    LOGV("AudioHardware::AudioStreamOutALSA::set");
 
     // fix up defaults
     if (lFormat == 0) lFormat = format();
@@ -1104,6 +1270,10 @@ ssize_t AudioHardware::AudioStreamOutALSA::write(const void* buffer, size_t byte
         // which is the only condition when mSleepReq would be true.
         usleep(10000);
     }
+
+    // bump thread priority to speed up mutex acquisition
+    int  priority = getpriority(PRIO_PROCESS, 0);
+    setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_URGENT_AUDIO);
 
     { // scope for the lock
 
@@ -1157,13 +1327,16 @@ ssize_t AudioHardware::AudioStreamOutALSA::write(const void* buffer, size_t byte
         TRACE_DRIVER_OUT
 
         if (ret == 0) {
+            setpriority(PRIO_PROCESS, 0, priority);
             return bytes;
         }
         LOGW("write error: %d %s", errno, pcm_error(mPcm));
         status = -errno;
     }
-Error:
 
+    setpriority(PRIO_PROCESS, 0, priority);
+
+Error:
     standby();
 
     // Simulate audio output timing in case of error
@@ -1365,7 +1538,8 @@ AudioHardware::AudioStreamInALSA::AudioStreamInALSA() :
     mHardware(0), mPcm(0), mMixer(0),
     mStandby(true), mDevices(0), mChannels(AUDIO_HW_IN_CHANNELS), mChannelCount(2),
     mSampleRate(AUDIO_HW_IN_SAMPLERATE), mBufferSize(AUDIO_HW_IN_PERIOD_BYTES),
-    mDownSampler(NULL), mChannelMixer(NULL), mReadStatus(NO_ERROR), mDriverOp(DRV_NONE),
+    mDownSampler(NULL), mChannelMixer(NULL), mReadStatus(NO_ERROR),
+    mInPcmInBuf(0), mPcmIn(NULL), mDriverOp(DRV_NONE),
     mStandbyCnt(0), mSleepReq(false)
 {
 }
@@ -1374,6 +1548,8 @@ status_t AudioHardware::AudioStreamInALSA::set(
     AudioHardware* hw, uint32_t devices, int *pFormat,
     uint32_t *pChannels, uint32_t *pRate, AudioSystem::audio_in_acoustics acoustics)
 {
+	LOGV("AudioHardware::AudioStreamInALSA::set");
+
     if (!pFormat || !pChannels || !pRate)
         return BAD_VALUE;
 
@@ -1407,6 +1583,8 @@ status_t AudioHardware::AudioStreamInALSA::set(
     mInputChannelCount = 2;
     mChannels = *pChannels;
     mChannelCount = AudioSystem::popCount(mChannels);
+    delete mChannelMixer;
+    mChannelMixer = NULL;
     if (mChannels != AUDIO_HW_IN_CHANNELS) {
         mChannelMixer = new AudioHardware::ChannelMixer(mChannelCount,
                                     mInputChannelCount, AUDIO_HW_IN_PERIOD_SZ, this);
@@ -1418,10 +1596,15 @@ status_t AudioHardware::AudioStreamInALSA::set(
         }
 
         bufferProvider = mChannelMixer;
-        mPcmIn = new int16_t[AUDIO_HW_IN_PERIOD_SZ * mInputChannelCount];
+        if (!mPcmIn)
+            mPcmIn = new int16_t[AUDIO_HW_IN_PERIOD_SZ * mInputChannelCount];
+        if (!mPcmIn)
+            return NO_MEMORY;
     }
     mBufferSize = getBufferSize(rate, mChannelCount);
     mSampleRate = rate;
+    delete mDownSampler;
+    mDownSampler = NULL;
     if (mSampleRate != AUDIO_HW_IN_SAMPLERATE) {
         mDownSampler = new AudioHardware::DownSampler(mSampleRate,
                                                   mChannelCount,
@@ -1435,7 +1618,9 @@ status_t AudioHardware::AudioStreamInALSA::set(
         }
 
         if (!mPcmIn)
-            mPcmIn = new int16_t[AUDIO_HW_IN_PERIOD_SZ * mChannelCount];
+            mPcmIn = new int16_t[AUDIO_HW_IN_PERIOD_SZ * mInputChannelCount];
+        if (!mPcmIn)
+            return NO_MEMORY;
     }
     return NO_ERROR;
 }
@@ -1457,6 +1642,8 @@ ssize_t AudioHardware::AudioStreamInALSA::read(void* buffer, ssize_t bytes)
     status_t status = NO_INIT;
     int ret;
 
+    LOGV("AudioHardware::AudioStreamInALSA::read");
+
     if (mHardware == NULL) return NO_INIT;
 
     if (mSleepReq) {
@@ -1464,6 +1651,10 @@ ssize_t AudioHardware::AudioStreamInALSA::read(void* buffer, ssize_t bytes)
         // which is the only condition when mSleepReq would be true.
         usleep(10000);
     }
+
+    // bump thread priority to speed up mutex acquisition
+    int  priority = getpriority(PRIO_PROCESS, 0);
+    setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_URGENT_AUDIO);
 
     { // scope for the lock
         AutoMutex lock(mLock);
@@ -1551,6 +1742,7 @@ ssize_t AudioHardware::AudioStreamInALSA::read(void* buffer, ssize_t bytes)
         }
 
         if (ret == 0) {
+            setpriority(PRIO_PROCESS, 0, priority);
             return bytes;
         }
 
@@ -1558,8 +1750,9 @@ ssize_t AudioHardware::AudioStreamInALSA::read(void* buffer, ssize_t bytes)
         status = ret;
     }
 
-Error:
+    setpriority(PRIO_PROCESS, 0, priority);
 
+Error:
     standby();
 
     // Simulate audio output timing in case of error
@@ -2190,8 +2383,8 @@ AudioHardware::ChannelMixer::ChannelMixer(uint32_t outChannelCount,
     :  mStatus(NO_INIT), mProvider(provider), mOutChannelCount(outChannelCount),
        mChannelCount(channelCount)
 {
-    LOGV("AudioHardware::DownSampler() cstor %p SR %d channels %d frames %d",
-         this, mSampleRate, mChannelCount, mFrameCount);
+    LOGV("AudioHardware::ChannelMixer() cstor %p channels %d frames %d",
+         this, mChannelCount, frameCount);
 
     if (outChannelCount != 1 || channelCount != 2) {
         LOGE("AudioHardware::ChannelMixer cstor: bad conversion: %d => %d",
@@ -2204,16 +2397,22 @@ AudioHardware::ChannelMixer::ChannelMixer(uint32_t outChannelCount,
 
 status_t AudioHardware::ChannelMixer::getNextBuffer(AudioHardware::BufferProvider::Buffer* buffer)
 {
+    status_t ret;
+
     if (!mProvider)
         return NO_INIT;
 
-    mProvider->getNextBuffer(buffer);
+    ret = mProvider->getNextBuffer(buffer);
+    if (ret != 0) {
+        LOGE("%s: mProvider->getNextBuffer() failed (%d)", __func__, ret);
+        return ret;
+    }
     if (!buffer->raw)
         return NO_ERROR;
 
     short *in = buffer->i16;
     short *out = buffer->i16;
-    for (unsigned i = 0; i < buffer->frameCount; ++i, ++out, in += 2)
+    for (unsigned int i = 0; i < buffer->frameCount; ++i, ++out, in += 2)
         out[0] = (in[0] + in[1]) / 2;
 
     return NO_ERROR;
@@ -2241,19 +2440,22 @@ int AudioHardware::ChannelMixer::mix(int16_t* out, size_t *outFrameCount)
         buf.frameCount = remaingFrames;
 
         int ret = mProvider->getNextBuffer(&buf);
-        if (buf.raw == NULL) {
+        if (ret || buf.raw == NULL) {
             *outFrameCount -= remaingFrames;
             return ret;
         }
-        
+
+        remaingFrames -= buf.frameCount;
+
         int framesRead = buf.frameCount;
         int16_t *inBuf = buf.i16;
-        while (framesRead--)
-            *(out++) = *(inBuf++);
+        while (framesRead--) {
+            out[0] = (int16_t)(((int32_t)inBuf[0] + (int32_t)inBuf[1]) / 2);
+            out += 1;
+            inBuf += 2;
+        }
 
         mProvider->releaseBuffer(&buf);
-
-        remaingFrames -= framesRead;
     }
 
     return 0;

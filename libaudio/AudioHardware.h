@@ -59,7 +59,7 @@ namespace android {
 // Number of buffers in audio driver for input
 //#define AUDIO_HW_NUM_IN_BUF 2
 // Kernel pcm in buffer size in frames at 44.1kHz (before resampling)
-#define AUDIO_HW_IN_PERIOD_MULT 8  // (16 * 128 = 2048 frames)
+#define AUDIO_HW_IN_PERIOD_MULT 8  // (8 * 128 = 1024 frames)
 #define AUDIO_HW_IN_PERIOD_SZ (PCM_PERIOD_SZ_MIN * AUDIO_HW_IN_PERIOD_MULT)
 #define AUDIO_HW_IN_PERIOD_CNT 4
 // Default audio input buffer size in bytes
@@ -83,6 +83,10 @@ public:
 
     virtual status_t setVoiceVolume(float volume);
     virtual status_t setMasterVolume(float volume);
+
+#ifdef HAVE_FM_RADIO
+    virtual status_t setFmVolume(float volume);
+#endif
 
     virtual status_t setMode(int mode);
 
@@ -115,6 +119,12 @@ public:
 
     status_t setIncallPath_l(uint32_t device);
 
+#ifdef HAVE_FM_RADIO
+            void enableFMRadio();
+            void disableFMRadio();
+            status_t setFMRadioPath_l(uint32_t device);
+#endif
+
     void setVoiceVolume_l(float volume);
 
     static uint32_t    getInputSampleRate(uint32_t sampleRate);
@@ -144,6 +154,7 @@ public:
         INPUT_HEADSET,
         INPUT_PHONE,
         INPUT_BT,
+        INPUT_FM,
         INPUT_COUNT
     };
 
@@ -153,6 +164,7 @@ public:
         OUTPUT_HP,
         OUTPUT_SPK_HP,
         OUTPUT_BT,
+        OUTPUT_FM_HP = 8,
         OUTPUT_COUNT
     };
 
@@ -225,6 +237,12 @@ private:
 
     audio_source    mInputSource;
     bool            mBluetoothNrec;
+
+#ifdef HAVE_FM_RADIO
+    int mFmFd;
+    float mFmVolume;
+    bool mFmResumeAfterCall;
+#endif
 
     //  trace driver operations for dump
     int             mDriverOp;

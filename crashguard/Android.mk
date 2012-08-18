@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2012 Tomasz Figa
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,27 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
-
-ifeq ($(TARGET_DEVICE),jet)
-
+LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := s3c6410-keypad.kcm
+
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_KEY_CHAR_MAP)
 
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := samsung-keypad.kcm
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_KEY_CHAR_MAP)
+LOCAL_SRC_FILES := crashguard.c
 
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := gpio-keys.kcm
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_KEY_CHAR_MAP)
+LOCAL_SHARED_LIBRARIES := libcutils
 
-ifneq ($(TARGET_SIMULATOR),true)
-include $(call all-makefiles-under,$(LOCAL_PATH))
-endif
+LOCAL_MODULE := crashguard
 
-endif
+include $(BUILD_EXECUTABLE)
